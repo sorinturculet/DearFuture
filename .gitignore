@@ -1,0 +1,20 @@
+# Ignore build outputs
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.suo
+*.vs
+.vscode/
+
+# Ignore secrets and configs
+appsettings.json
+secrets.json
+*.pfx
+
+# Ignore compiled files
+*.dll
+*.exe
+*.pdb
+*.cache
