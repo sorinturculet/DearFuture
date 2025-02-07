@@ -57,6 +57,9 @@
                                                 <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
                                                 <Label Text="{Binding UnlockDate, StringFormat='Unlocks on: {0:MMMM dd, yyyy}'}"
                                                        FontSize="14" TextColor="Black"/>
+                                                <Label Text="{Binding TimeRemaining}" FontSize="14" TextColor="Black"/>
+
+
                                             </StackLayout>
 
                                             <!-- Delete Button (Right Side) -->

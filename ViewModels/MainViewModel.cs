@@ -14,7 +14,6 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
     private ObservableCollection<Capsule> _archivedCapsules;
     private string _selectedSortOption = "Default";
     private string _selectedCategory = "All";
-    private static System.Timers.Timer _timer;
 
     public ObservableCollection<Capsule> Capsules
     {
@@ -84,7 +83,20 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         // ✅ Register as an observer
         CapsuleObservable.AddObserver(this);
 
-        LoadCapsules();
+        StartAlignedTimer();
+    }
+    private async void StartAlignedTimer()
+    {
+        while (true)
+        {
+            LoadCapsules();
+
+            // ✅ Calculate time until next full minute
+            DateTime now = DateTime.Now;
+            int secondsUntilNextMinute = 60 - now.Second;
+
+            await Task.Delay(1000); // Wait until the next full minute
+        }
     }
 
     public async void LoadCapsules()
@@ -94,6 +106,7 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
 
         var archivedCapsulesList = await _capsuleService.GetArchivedCapsulesAsync();
         ArchivedCapsules = new ObservableCollection<Capsule>(archivedCapsulesList);
+
     }
 
     // ✅ Observer method implementation

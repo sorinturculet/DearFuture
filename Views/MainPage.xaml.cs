@@ -11,6 +11,7 @@ namespace DearFuture.Views
             InitializeComponent();
             BindingContext = viewModel;
             _viewModel = viewModel; //  Store reference to ViewModel
+            
         }
         
         private async void OnAddCapsuleClicked(object sender, EventArgs e)

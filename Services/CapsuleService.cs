@@ -85,5 +85,14 @@ namespace DearFuture.Services
         {
             return _capsuleRepository.DeleteCapsuleAsync(id);
         }
+
+        // ✅ Calculate remaining time for a capsule
+        public string GetTimeRemaining(Capsule capsule)
+        {
+            TimeSpan remaining = capsule.UnlockDate - DateTime.Now;
+            return remaining.TotalSeconds > 0
+                ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m"
+                : "Unlocked!";
+        }
     }
 }

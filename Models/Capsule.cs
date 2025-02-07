@@ -1,5 +1,6 @@
 ﻿using System;
 using SQLite;
+
 namespace DearFuture.Models
 {
     public class Capsule
@@ -8,14 +9,12 @@ namespace DearFuture.Models
         public int Id { get; set; }
 
         public string Title { get; set; } = string.Empty;
-        public string Message { get; init; } 
-        public string Color { get; set; } = "#FFFFFF"; // Default : white
+        public string Message { get; init; }
+        public string Color { get; set; } = "#FFFFFF"; // Default: white
         public DateTime UnlockDate { get; set; }
         public string Category { get; set; } = string.Empty;
         public DateTime DateCreated { get; set; } = DateTime.Now;
 
-        // Quick functions to help with the capsule
-        public TimeSpan TimeRemaining => UnlockDate > DateTime.Now ? UnlockDate - DateTime.Now : TimeSpan.Zero;
         public bool IsUnlocked => DateTime.Now >= UnlockDate;
 
         private bool _isOpened = false;
@@ -28,6 +27,23 @@ namespace DearFuture.Models
                 {
                     _isOpened = value;
                 }
+            }
+        }
+
+        // ✅ Directly bindable `TimeRemaining` property
+        private string _timeRemaining;
+        public string TimeRemaining
+        {
+            get
+            {
+                TimeSpan remaining = UnlockDate - DateTime.Now;
+                return remaining.TotalSeconds > 0
+                    ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m:{remaining.Seconds:D2}"
+                    : "Unlocked!";
+            }
+            set
+            {
+                _timeRemaining = value;
             }
         }
 
