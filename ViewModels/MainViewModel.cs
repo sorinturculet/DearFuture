@@ -1,5 +1,4 @@
-﻿
-using DearFuture.Models;
+﻿using DearFuture.Models;
 using DearFuture.Services;
 using DearFuture.Observers;
 namespace DearFuture.ViewModels;
@@ -12,6 +11,7 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
 {
     private readonly CapsuleService _capsuleService;
     private ObservableCollection<Capsule> _capsules;
+    private ObservableCollection<Capsule> _archivedCapsules;
     private string _selectedSortOption = "Default";
     private string _selectedCategory = "All";
     private static System.Timers.Timer _timer;
@@ -24,7 +24,16 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
             _capsules = value;
             OnPropertyChanged(nameof(Capsules));
         }
+    }
 
+    public ObservableCollection<Capsule> ArchivedCapsules
+    {
+        get => _archivedCapsules;
+        set
+        {
+            _archivedCapsules = value;
+            OnPropertyChanged(nameof(ArchivedCapsules));
+        }
     }
 
     public List<string> SortOptions { get; } = new()
@@ -70,18 +79,21 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
     {
         _capsuleService = capsuleService;
         Capsules = new ObservableCollection<Capsule>();
+        ArchivedCapsules = new ObservableCollection<Capsule>();
 
         // ✅ Register as an observer
         CapsuleObservable.AddObserver(this);
 
         LoadCapsules();
-
     }
 
     public async void LoadCapsules()
     {
-        var capsulesList = await _capsuleService.GetCapsulesAsync(SelectedCategory, SelectedSortOption);
+        var capsulesList = await _capsuleService.GetLockedCapsulesAsync(SelectedCategory, SelectedSortOption);
         Capsules = new ObservableCollection<Capsule>(capsulesList);
+
+        var archivedCapsulesList = await _capsuleService.GetArchivedCapsulesAsync();
+        ArchivedCapsules = new ObservableCollection<Capsule>(archivedCapsulesList);
     }
 
     // ✅ Observer method implementation
@@ -90,13 +102,18 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         LoadCapsules(); // Reload capsules when notified
     }
 
+    public async Task<string> OpenCapsuleAsync(int id)
+    {
+        string message = await _capsuleService.OpenCapsuleAsync(id);
+        LoadCapsules(); // Refresh lists after opening a capsule
+        return message;
+    }
 
     public async Task DeleteCapsuleAsync(int id)
     {
         await _capsuleService.DeleteCapsuleAsync(id); // Calls the service to delete
         Capsules.Remove(Capsules.FirstOrDefault(c => c.Id == id)); // Remove from UI
     }
-
 
     public event PropertyChangedEventHandler PropertyChanged;
     protected virtual void OnPropertyChanged(string propertyName) =>

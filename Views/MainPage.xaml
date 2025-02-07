@@ -5,96 +5,81 @@
              Title="DearFuture">
 
     <Grid>
-       
-        <!-- Capsule List wrapped in ScrollView to make it scrollable -->
-        <ScrollView>
-            <VerticalStackLayout Padding="20">
-                <Grid Padding="20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <!-- Title on the left -->
-                        <ColumnDefinition Width="*"/>
-                        <!-- Pickers on the right -->
-                    </Grid.ColumnDefinitions>
+        <VerticalStackLayout Padding="10">
+            <!-- Navigation Buttons -->
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                <Button Text="Archived Capsules" Clicked="OnViewArchivedCapsulesClicked"
+                        BackgroundColor="DarkGray" TextColor="White"/>
+            </HorizontalStackLayout>
 
-                    <!-- Left side: Title -->
-                    <Label Text="Your Time Capsules"
-                       FontSize="24" FontAttributes="Bold"
-                       Grid.Column="0"
-                       VerticalOptions="Center"/>
+            <!-- Capsule List wrapped in ScrollView to make it scrollable -->
+            <ScrollView>
+                <VerticalStackLayout Padding="20">
+                    <Grid Padding="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Right side: Sort & Filter Pickers in Horizontal Layout -->
-                    <HorizontalStackLayout Spacing="10" Grid.Column="1" HorizontalOptions="End">
+                        <!-- Left side: Title -->
+                        <Label Text="Your Time Capsules"
+                               FontSize="24" FontAttributes="Bold"
+                               Grid.Column="0"
+                               VerticalOptions="Center"/>
 
-                        <!-- Sort Picker -->
-                        <Label Text="Sort by"
-                           FontSize="16" FontAttributes="Bold"
-                           TextColor="Black"
-                           VerticalOptions="Center"/>
-                        <Picker ItemsSource="{Binding SortOptions}"
-                            SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"
-                            FontSize="14"
-                            TextColor="Black"
-                            BackgroundColor="White"/>
+                        <!-- Right side: Sort & Filter Pickers -->
+                        <HorizontalStackLayout Spacing="10" Grid.Column="1" HorizontalOptions="End">
+                            <Label Text="Sort by" FontSize="16" FontAttributes="Bold"
+                                   TextColor="Black" VerticalOptions="Center"/>
+                            <Picker ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"
+                                    FontSize="14" TextColor="Black" BackgroundColor="White"/>
 
-                        <!-- Category Picker -->
-                        <Label Text="Filter by"
-                           FontSize="16" FontAttributes="Bold"
-                           TextColor="Black"
-                           VerticalOptions="Center"/>
-                        <Picker ItemsSource="{Binding CategoryOptions}"
-                            SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                            FontSize="14"
-                            TextColor="Black"
-                            BackgroundColor="White"/>
-                    </HorizontalStackLayout>
-                </Grid>
-                
+                            <Label Text="Filter by" FontSize="16" FontAttributes="Bold"
+                                   TextColor="Black" VerticalOptions="Center"/>
+                            <Picker ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                    FontSize="14" TextColor="Black" BackgroundColor="White"/>
+                        </HorizontalStackLayout>
+                    </Grid>
 
-                <!-- ListView that is inherently scrollable when there are many items -->
-                <ListView x:Name="CapsuleListView"
-          ItemsSource="{Binding Capsules}"
-          SelectionMode="None">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <ViewCell>
-                                <Frame BorderColor="{Binding Color}" Padding="10" CornerRadius="10"
-                       HasShadow="True" BackgroundColor="{Binding Color}" Margin="5">
+                    <!-- ListView with Tap Gesture -->
+                    <ListView x:Name="CapsuleListView"
+                              ItemsSource="{Binding Capsules}"
+                              SelectionMode="None"
+                              ItemTapped="OnCapsuleTapped">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell>
+                                    <Frame BorderColor="{Binding Color}" Padding="10" CornerRadius="10"
+                                           HasShadow="True" BackgroundColor="{Binding Color}" Margin="5">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <!-- Capsule Details (Left Side) -->
+                                            <StackLayout Grid.Column="0">
+                                                <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
+                                                <Label Text="{Binding UnlockDate, StringFormat='Unlocks on: {0:MMMM dd, yyyy}'}"
+                                                       FontSize="14" TextColor="Black"/>
+                                            </StackLayout>
 
-                                    <!-- Use a Grid to align the delete button to the right -->
-                                    <Grid ColumnDefinitions="*, Auto">
+                                            <!-- Delete Button (Right Side) -->
+                                            <Button Grid.Column="1" Text="❌" BackgroundColor="Transparent"
+                                                    FontSize="18" Clicked="OnDeleteCapsuleClicked"
+                                                    CommandParameter="{Binding Id}" />
+                                        </Grid>
+                                    </Frame>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </VerticalStackLayout>
+            </ScrollView>
 
-                                        <!-- Capsule Details (Left Side) -->
-                                        <StackLayout Grid.Column="0">
-                                            <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
-                                            <Label Text="{Binding UnlockDate, StringFormat='Unlocks on: {0:MMMM dd, yyyy}'}"
-                                   FontSize="14" TextColor="Black"/>
-                                        </StackLayout>
-
-                                        <!-- Delete Button (Right Side) -->
-                                        <Button Grid.Column="1" Text="❌" BackgroundColor="Transparent"
-                                FontSize="18" Clicked="OnDeleteCapsuleClicked"
-                                CommandParameter="{Binding Id}" />
-
-                                    </Grid>
-
-                                </Frame>
-                            </ViewCell>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-
-
-            </VerticalStackLayout>
-        </ScrollView>
-
-        <!-- Floating Action Button -->
-        <Button Text="+" Clicked="OnAddCapsuleClicked"
-                FontSize="24" BackgroundColor="DodgerBlue" TextColor="White"
-                WidthRequest="60" HeightRequest="60"
-                CornerRadius="30"
-                VerticalOptions="End" HorizontalOptions="End"
-                Margin="20"/>
+            <!-- Floating Action Button -->
+            <Button Text="+" Clicked="OnAddCapsuleClicked"
+                    FontSize="24" BackgroundColor="DodgerBlue" TextColor="White"
+                    WidthRequest="60" HeightRequest="60"
+                    CornerRadius="30"
+                    VerticalOptions="End" HorizontalOptions="End"
+                    Margin="20"/>
+        </VerticalStackLayout>
     </Grid>
 
 </ContentPage>

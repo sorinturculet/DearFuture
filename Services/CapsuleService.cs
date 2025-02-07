@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DearFuture.Models;
 using DearFuture.Repositories;
@@ -14,9 +16,11 @@ namespace DearFuture.Services
             _capsuleRepository = capsuleRepository;
         }
 
-        public async Task<List<Capsule>> GetCapsulesAsync(string category = null, string sortOption = "")
+        // ✅ Get locked capsules with filtering and sorting
+        public async Task<List<Capsule>> GetLockedCapsulesAsync(string category = null, string sortOption = "")
         {
             var capsules = await _capsuleRepository.GetCapsulesAsync();
+            capsules = capsules.Where(c => !c.IsOpened).ToList();
 
             // 🔥 Apply filtering
             if (!string.IsNullOrEmpty(category) && category != "All")
@@ -37,6 +41,24 @@ namespace DearFuture.Services
             };
         }
 
+        // ✅ Get all archived (opened) capsules
+        public async Task<List<Capsule>> GetArchivedCapsulesAsync()
+        {
+            var capsules = await _capsuleRepository.GetCapsulesAsync();
+            return capsules.Where(c => c.IsOpened).ToList();
+        }
+
+        // ✅ Open a capsule and return its message
+        public async Task<string> OpenCapsuleAsync(int id)
+        {
+            var capsule = await _capsuleRepository.GetCapsuleByIdAsync(id);
+            if (capsule == null || !capsule.IsUnlocked)
+                return "This capsule is still locked!";
+
+            capsule.IsOpened = true;
+            await _capsuleRepository.UpdateCapsuleAsync(capsule);
+            return capsule.GetMessage(); // Return the message after unlocking
+        }
 
         public Task<Capsule> GetCapsuleByIdAsync(int id)
         {

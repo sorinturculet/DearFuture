@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DearFuture.Views.ArchivedCapsulesPage"
+             Title="Archived Capsules">
+
+    <VerticalStackLayout Padding="20">
+        <Label Text="Archived Capsules" FontSize="24" FontAttributes="Bold"/>
+
+        <ListView ItemsSource="{Binding ArchivedCapsules}" SelectionMode="None"
+                  ItemTapped="OnArchivedCapsuleTapped">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <Frame BorderColor="{Binding Color}" Padding="10" CornerRadius="10"
+                               HasShadow="True" BackgroundColor="{Binding Color}" Margin="5">
+                            <StackLayout>
+                                <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
+                                <Label Text="{Binding DateCreated, StringFormat='Created on: {0:MMMM dd, yyyy}'}"
+                                       FontSize="14" TextColor="Black"/>
+                            </StackLayout>
+                        </Frame>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </VerticalStackLayout>
+
+</ContentPage>

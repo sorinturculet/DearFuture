@@ -30,8 +30,10 @@ public static class MauiProgram
         builder.Services.AddTransient<CreateCapsuleViewModel>(); // ✅ Register ViewModel
 
         // Register Views
+
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddTransient<CreateCapsulePage>();
+        builder.Services.AddTransient<ArchivedCapsulesPage>();
 
         return builder.Build();
     }
