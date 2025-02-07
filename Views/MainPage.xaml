@@ -9,33 +9,47 @@
         <!-- Capsule List wrapped in ScrollView to make it scrollable -->
         <ScrollView>
             <VerticalStackLayout Padding="20">
-                <Label Text="Your Time Capsules" FontSize="24" FontAttributes="Bold"/>
+                <Grid Padding="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- Title on the left -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Pickers on the right -->
+                    </Grid.ColumnDefinitions>
 
-                <!-- 🔥 Category Filter -->
-                <Picker Title="Filter by Category" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}">
-                    <Picker.ItemsSource>
-                        <x:Array Type="{x:Type x:String}">
-                            <x:String>All</x:String>
-                            <x:String>Event</x:String>
-                            <x:String>Reminder</x:String>
-                            <x:String>Reflection</x:String>
-                        </x:Array>
-                    </Picker.ItemsSource>
-                </Picker>
+                    <!-- Left side: Title -->
+                    <Label Text="Your Time Capsules"
+                       FontSize="24" FontAttributes="Bold"
+                       Grid.Column="0"
+                       VerticalOptions="Center"/>
 
-                <!-- 🔥 Sorting Menu -->
-                <Picker Title="Sort by" SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}">
-                    <Picker.ItemsSource>
-                        <x:Array Type="{x:Type x:String}">
-                            <x:String>Date Created (Newest)</x:String>
-                            <x:String>Date Created (Oldest)</x:String>
-                            <x:String>Name (A-Z)</x:String>
-                            <x:String>Name (Z-A)</x:String>
-                            <x:String>Unlock Date (Soonest)</x:String>
-                            <x:String>Unlock Date (Latest)</x:String>
-                        </x:Array>
-                    </Picker.ItemsSource>
-                </Picker>
+                    <!-- Right side: Sort & Filter Pickers in Horizontal Layout -->
+                    <HorizontalStackLayout Spacing="10" Grid.Column="1" HorizontalOptions="End">
+
+                        <!-- Sort Picker -->
+                        <Label Text="Sort by"
+                           FontSize="16" FontAttributes="Bold"
+                           TextColor="Black"
+                           VerticalOptions="Center"/>
+                        <Picker ItemsSource="{Binding SortOptions}"
+                            SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"
+                            FontSize="14"
+                            TextColor="Black"
+                            BackgroundColor="White"/>
+
+                        <!-- Category Picker -->
+                        <Label Text="Filter by"
+                           FontSize="16" FontAttributes="Bold"
+                           TextColor="Black"
+                           VerticalOptions="Center"/>
+                        <Picker ItemsSource="{Binding CategoryOptions}"
+                            SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                            FontSize="14"
+                            TextColor="Black"
+                            BackgroundColor="White"/>
+                    </HorizontalStackLayout>
+                </Grid>
+                
 
                 <!-- ListView that is inherently scrollable when there are many items -->
                 <ListView x:Name="CapsuleListView"
@@ -61,6 +75,7 @@
                                         <Button Grid.Column="1" Text="❌" BackgroundColor="Transparent"
                                 FontSize="18" Clicked="OnDeleteCapsuleClicked"
                                 CommandParameter="{Binding Id}" />
+
                                     </Grid>
 
                                 </Frame>
