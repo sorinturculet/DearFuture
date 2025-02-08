@@ -1,8 +1,5 @@
 using DearFuture.ViewModels;
 using DearFuture.Models;
-using Microsoft.Maui.Controls;
-using System;
-
 namespace DearFuture.Views
 {
     public partial class ArchivedCapsulesPage : ContentPage
@@ -20,7 +17,7 @@ namespace DearFuture.Views
             if (e.Item is Capsule capsule)
             {
                 string message = capsule.GetMessage(); // Retrieve the stored message
-                await DisplayAlert("Capsule Message", message, "OK");
+                await DisplayAlert($"Capsule: {capsule.Title}", message, "OK");
             }
         }
 

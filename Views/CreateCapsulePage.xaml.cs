@@ -14,7 +14,7 @@ namespace DearFuture.Views
         }
         private async void OnSaveCapsuleClicked(object sender, EventArgs e)
         {
-            await _viewModel.SaveCapsuleAsync(); // Call ViewModel method
+            await _viewModel.SaveCapsuleAsync(); // Call ViewModel Save method
         }
     }
 }

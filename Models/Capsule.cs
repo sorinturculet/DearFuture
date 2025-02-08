@@ -12,12 +12,13 @@ namespace DearFuture.Models
         public int Id { get; set; }
 
         public string Title { get; set; } = string.Empty;
-        public string Message { get; init; }
-        public string Color { get; set; } = "#FFFFFF"; // Default: white
+        public string Message { get; init; } = string.Empty;
+        public string Color { get; set; } = "#FFFFFF";
         public DateTime UnlockDate { get; set; }
         public string Category { get; set; } = string.Empty;
         public DateTime DateCreated { get; set; } = DateTime.Now;
 
+        // Determines if the capsule can be unlocked
         public bool IsUnlocked => DateTime.Now >= UnlockDate;
 
         private bool _isOpened = false;
@@ -43,14 +44,19 @@ namespace DearFuture.Models
                 if (_timeRemaining != value)
                 {
                     _timeRemaining = value;
-                    OnPropertyChanged(nameof(TimeRemaining)); // ✅ Notify UI when updated
+                    OnPropertyChanged(nameof(TimeRemaining));
                 }
             }
         }
 
+        // Stores GPS coordinates if the capsule is location-based
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public bool HasLocation => Latitude.HasValue && Longitude.HasValue;
+
         public string GetMessage()
         {
-            return IsUnlocked ? Message : $" This capsule is locked! Come back on {UnlockDate:MMMM dd, yyyy}.";
+            return IsUnlocked ? Message : $"This capsule is locked! Come back on {UnlockDate:MMMM dd, yyyy}.";
         }
 
         private void OnPropertyChanged(string propertyName)

@@ -17,17 +17,20 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             });
-
+        
         // Register SQLite Repository
         string dbPath = Path.Combine(FileSystem.AppDataDirectory, "dearfuture.db");
         builder.Services.AddSingleton<ICapsuleRepository>(sp => new CapsuleRepository(dbPath));
 
+        // Register Geolocation and Map Services.
+        builder.Services.AddSingleton<IGeolocation>(Geolocation.Default);
+        builder.Services.AddSingleton<IMap>(Map.Default);
         // Register Service Layer
         builder.Services.AddSingleton<CapsuleService>();
 
         // Register ViewModels
         builder.Services.AddSingleton<MainViewModel>();
-        builder.Services.AddTransient<CreateCapsuleViewModel>(); // ✅ Register ViewModel
+        builder.Services.AddTransient<CreateCapsuleViewModel>();
 
         // Register Views
 

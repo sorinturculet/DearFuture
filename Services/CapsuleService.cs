@@ -16,19 +16,19 @@ namespace DearFuture.Services
             _capsuleRepository = capsuleRepository;
         }
 
-        // ✅ Get locked capsules with filtering and sorting
+        // Retrieves all locked capsules, applying optional filtering and sorting
         public async Task<List<Capsule>> GetLockedCapsulesAsync(string category = null, string sortOption = "")
         {
             var capsules = await _capsuleRepository.GetCapsulesAsync();
             capsules = capsules.Where(c => !c.IsOpened).ToList();
 
-            // 🔥 Apply filtering
+            // Apply filtering if a category is specified
             if (!string.IsNullOrEmpty(category) && category != "All")
             {
                 capsules = capsules.Where(c => c.Category == category).ToList();
             }
 
-            // 🔥 Apply sorting
+            // Apply sorting based on the selected option
             return sortOption switch
             {
                 "Date Created (Newest)" => capsules.OrderByDescending(c => c.DateCreated).ToList(),
@@ -41,14 +41,14 @@ namespace DearFuture.Services
             };
         }
 
-        // ✅ Get all archived (opened) capsules
+        // Retrieves all archived (opened) capsules
         public async Task<List<Capsule>> GetArchivedCapsulesAsync()
         {
             var capsules = await _capsuleRepository.GetCapsulesAsync();
             return capsules.Where(c => c.IsOpened).ToList();
         }
 
-        // ✅ Open a capsule and return its message
+        // Opens a capsule if it is unlocked and returns its message
         public async Task<string> OpenCapsuleAsync(int id)
         {
             var capsule = await _capsuleRepository.GetCapsuleByIdAsync(id);
@@ -57,14 +57,16 @@ namespace DearFuture.Services
 
             capsule.IsOpened = true;
             await _capsuleRepository.UpdateCapsuleAsync(capsule);
-            return capsule.GetMessage(); // Return the message after unlocking
+            return capsule.GetMessage();
         }
 
+        // Retrieves a capsule by its ID
         public Task<Capsule> GetCapsuleByIdAsync(int id)
         {
             return _capsuleRepository.GetCapsuleByIdAsync(id);
         }
 
+        // Adds a new capsule if it passes validation
         public async Task<bool> AddCapsuleAsync(Capsule capsule)
         {
             if (string.IsNullOrWhiteSpace(capsule.Title) || capsule.UnlockDate <= DateTime.Now)
@@ -76,17 +78,19 @@ namespace DearFuture.Services
             return true;
         }
 
+        // Updates an existing capsule in the database
         public Task<int> UpdateCapsuleAsync(Capsule capsule)
         {
             return _capsuleRepository.UpdateCapsuleAsync(capsule);
         }
 
+        // Deletes a capsule by its ID
         public Task<int> DeleteCapsuleAsync(int id)
         {
             return _capsuleRepository.DeleteCapsuleAsync(id);
         }
 
-        // ✅ Calculate remaining time for a capsule
+        // Calculates the remaining time before a capsule can be unlocked
         public string GetTimeRemaining(Capsule capsule)
         {
             TimeSpan remaining = capsule.UnlockDate - DateTime.Now;

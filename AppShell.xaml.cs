@@ -6,8 +6,7 @@ namespace DearFuture
         public AppShell()
         {
             InitializeComponent();
-
-            // ✅ Register navigation routes manually
+            // Register navigation routes
             Routing.RegisterRoute(nameof(CreateCapsulePage), typeof(CreateCapsulePage));
         }
     }

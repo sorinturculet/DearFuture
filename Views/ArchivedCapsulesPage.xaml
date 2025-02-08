@@ -3,27 +3,42 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DearFuture.Views.ArchivedCapsulesPage"
              Title="Archived Capsules">
+
+    <!-- Allows scrolling if there are many archived capsules -->
     <ScrollView>
         <VerticalStackLayout Padding="20">
+
+            <!-- Page title -->
             <Label Text="Archived Capsules" FontSize="24" FontAttributes="Bold"/>
 
+            <!-- List of archived capsules -->
             <ListView ItemsSource="{Binding ArchivedCapsules}" SelectionMode="None"
                       ItemTapped="OnArchivedCapsuleTapped">
+
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
+
+                            <!-- Capsule container -->
                             <Frame BorderColor="{Binding Color}" Padding="10" CornerRadius="10"
                                    HasShadow="True" BackgroundColor="{Binding Color}" Margin="5">
                                 <StackLayout>
+
+                                    <!-- Capsule title -->
                                     <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
+
+                                    <!-- Display when the capsule was created -->
                                     <Label Text="{Binding DateCreated, StringFormat='Created on: {0:MMMM dd, yyyy}'}"
                                            FontSize="14" TextColor="Black"/>
                                 </StackLayout>
                             </Frame>
+
                         </ViewCell>
                     </DataTemplate>
                 </ListView.ItemTemplate>
+
             </ListView>
+
         </VerticalStackLayout>
     </ScrollView>
 
