@@ -14,6 +14,18 @@ namespace DearFuture.Views
             
         }
         
+        private Frame FindCapsuleFrame(int capsuleId)
+        {
+            foreach (var item in CapsuleListView.ItemsSource)
+            {
+                if (item is Capsule capsule && capsule.Id == capsuleId)
+                {
+                    return (Frame)CapsuleListView.ItemTemplate.CreateContent();
+                }
+            }
+            return null;
+        }
+
         private async void OnAddCapsuleClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync(nameof(CreateCapsulePage));

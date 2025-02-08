@@ -1,10 +1,13 @@
 ﻿using System;
+using System.ComponentModel;
 using SQLite;
 
 namespace DearFuture.Models
 {
-    public class Capsule
+    public class Capsule : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
@@ -26,31 +29,33 @@ namespace DearFuture.Models
                 if (IsUnlocked)
                 {
                     _isOpened = value;
+                    OnPropertyChanged(nameof(IsOpened));
                 }
             }
         }
 
-        // ✅ Directly bindable `TimeRemaining` property
         private string _timeRemaining;
         public string TimeRemaining
         {
-            get
-            {
-                TimeSpan remaining = UnlockDate - DateTime.Now;
-                return remaining.TotalSeconds > 0
-                    ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m:{remaining.Seconds:D2}"
-                    : "Unlocked!";
-            }
+            get => _timeRemaining;
             set
             {
-                _timeRemaining = value;
+                if (_timeRemaining != value)
+                {
+                    _timeRemaining = value;
+                    OnPropertyChanged(nameof(TimeRemaining)); // ✅ Notify UI when updated
+                }
             }
         }
 
-        // Return message based on unlock state
         public string GetMessage()
         {
             return IsUnlocked ? Message : $" This capsule is locked! Come back on {UnlockDate:MMMM dd, yyyy}.";
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

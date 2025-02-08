@@ -5,15 +5,16 @@
              Title="DearFuture">
 
     <Grid>
-        <VerticalStackLayout Padding="10">
+        <!-- Capsule List wrapped in ScrollView to make it scrollable -->
+        <ScrollView>
+            <VerticalStackLayout Padding="10">
             <!-- Navigation Buttons -->
             <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
                 <Button Text="Archived Capsules" Clicked="OnViewArchivedCapsulesClicked"
                         BackgroundColor="DarkGray" TextColor="White"/>
             </HorizontalStackLayout>
 
-            <!-- Capsule List wrapped in ScrollView to make it scrollable -->
-            <ScrollView>
+            
                 <VerticalStackLayout Padding="20">
                     <Grid Padding="20">
                         <Grid.ColumnDefinitions>
@@ -51,6 +52,7 @@
                                 <ViewCell>
                                     <Frame BorderColor="{Binding Color}" Padding="10" CornerRadius="10"
                                            HasShadow="True" BackgroundColor="{Binding Color}" Margin="5">
+
                                         <Grid ColumnDefinitions="*, Auto">
                                             <!-- Capsule Details (Left Side) -->
                                             <StackLayout Grid.Column="0">
@@ -72,17 +74,20 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                    
                 </VerticalStackLayout>
-            </ScrollView>
+            
 
-            <!-- Floating Action Button -->
+            </VerticalStackLayout>
+        </ScrollView>
+        <!-- Floating Button Always Stays at the Bottom-Right -->
+        <Grid VerticalOptions="End" HorizontalOptions="End"
+              Margin="20" Padding="5">
             <Button Text="+" Clicked="OnAddCapsuleClicked"
                     FontSize="24" BackgroundColor="DodgerBlue" TextColor="White"
                     WidthRequest="60" HeightRequest="60"
-                    CornerRadius="30"
-                    VerticalOptions="End" HorizontalOptions="End"
-                    Margin="20"/>
-        </VerticalStackLayout>
+                    CornerRadius="30"/>
+        </Grid>
     </Grid>
 
 </ContentPage>

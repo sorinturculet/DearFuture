@@ -83,19 +83,26 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         // ✅ Register as an observer
         CapsuleObservable.AddObserver(this);
 
-        StartAlignedTimer();
+        StartTimer();
     }
-    private async void StartAlignedTimer()
+    private async void StartTimer()
     {
         while (true)
         {
-            LoadCapsules();
+            UpdateCapsuleTimers();
+            await Task.Delay(1000); // ✅ Updates every second
+        }
+    }
 
-            // ✅ Calculate time until next full minute
-            DateTime now = DateTime.Now;
-            int secondsUntilNextMinute = 60 - now.Second;
+    private void UpdateCapsuleTimers()
+    {
+        foreach (var capsule in Capsules)
+        {
+            TimeSpan remaining = capsule.UnlockDate - DateTime.Now;
+            capsule.TimeRemaining = remaining.TotalSeconds > 0
+                ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m:{remaining.Seconds:D2}s"
+                : "Unlocked!";
 
-            await Task.Delay(1000); // Wait until the next full minute
         }
     }
 
@@ -117,10 +124,32 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
 
     public async Task<string> OpenCapsuleAsync(int id)
     {
+        var capsule = Capsules.FirstOrDefault(c => c.Id == id);
+        if (capsule == null)
+            return "Capsule not found.";
+
+        // ✅ Ask service to unlock the capsule
         string message = await _capsuleService.OpenCapsuleAsync(id);
-        LoadCapsules(); // Refresh lists after opening a capsule
+
+        // ✅ If the capsule is still locked, do nothing (no UI update)
+        if (!capsule.IsUnlocked)
+            return message;
+
+        // ✅ Mark as opened
+        capsule.IsOpened = true;
+
+        // ✅ Move capsule to archive
+        Capsules.Remove(capsule);
+        ArchivedCapsules.Add(capsule);
+
+        // ✅ Notify UI for updates
+        OnPropertyChanged(nameof(Capsules));
+        OnPropertyChanged(nameof(ArchivedCapsules));
+
         return message;
     }
+
+
 
     public async Task DeleteCapsuleAsync(int id)
     {
