@@ -37,6 +37,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddTransient<CreateCapsulePage>();
         builder.Services.AddTransient<ArchivedCapsulesPage>();
+        builder.Services.AddTransient<TrashCapsulesPage>();
 
         return builder.Build();
     }

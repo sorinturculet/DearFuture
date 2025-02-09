@@ -53,7 +53,7 @@ namespace DearFuture.Services
         {
             var capsule = await _capsuleRepository.GetCapsuleByIdAsync(id);
             if (capsule == null || !capsule.IsUnlocked)
-                return "This capsule is still locked!";
+                return "This capsule is locked!";
 
             capsule.IsOpened = true;
             await _capsuleRepository.UpdateCapsuleAsync(capsule);
@@ -84,10 +84,34 @@ namespace DearFuture.Services
             return _capsuleRepository.UpdateCapsuleAsync(capsule);
         }
 
-        // Deletes a capsule by its ID
+        // Moves a capsule to Trash (soft delete)
         public Task<int> DeleteCapsuleAsync(int id)
         {
             return _capsuleRepository.DeleteCapsuleAsync(id);
+        }
+        // Permanently deletes a capsule from the database
+        public Task<int> PermanentlyDeleteCapsuleAsync(int id)
+        {
+            return _capsuleRepository.PermanentlyDeleteCapsuleAsync(id);
+        }
+
+        // Retrieves all deleted (trashed) capsules
+        public Task<List<Capsule>> GetDeletedCapsulesAsync()
+        {
+            return _capsuleRepository.GetDeletedCapsulesAsync();
+        }
+
+
+        // Restores a capsule from Trash
+        public Task<int> RestoreCapsuleAsync(int id)
+        {
+            return _capsuleRepository.RestoreCapsuleAsync(id);
+        }
+
+        // Permanently deletes capsules that have been in Trash for more than 15 days
+        public Task<int> CleanupOldDeletedCapsulesAsync()
+        {
+            return _capsuleRepository.CleanupOldDeletedCapsulesAsync();
         }
 
         // Calculates the remaining time before a capsule can be unlocked

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DearFuture.Views.TrashCapsulesPage"
+             Title="Trash Capsules">
+
+    <!-- Allows scrolling if there are many deleted capsules -->
+    <ScrollView>
+        <VerticalStackLayout Padding="20">
+
+            <!-- Page title -->
+            <Label Text="Trash Capsules" FontSize="24" FontAttributes="Bold"/>
+
+            <!-- List of deleted capsules -->
+            <ListView ItemsSource="{Binding TrashCapsules}" SelectionMode="None"
+                      ItemTapped="OnTrashCapsuleTapped">
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+
+                            <!-- Capsule container -->
+                            <Frame BorderColor="Red" Padding="10" CornerRadius="10"
+                                   HasShadow="True" BackgroundColor="LightGray" Margin="5">
+                                <StackLayout>
+
+                                    <!-- Capsule title -->
+                                    <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
+
+                                    <!-- Display when the capsule was deleted -->
+                                    <Label Text="{Binding DeletedAt, StringFormat='Deleted on: {0:MMMM dd, yyyy}'}"
+                                           FontSize="14" TextColor="Black"/>
+
+                                    <!-- Restore and Permanent Delete Buttons -->
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Button Text="Restore" Clicked="OnRestoreCapsuleClicked"
+                                                BackgroundColor="Green" TextColor="White"
+                                                CommandParameter="{Binding Id}"/>
+                                        <Button Text="Delete Permanently" Clicked="OnDeleteCapsulePermanentlyClicked"
+                                                BackgroundColor="Red" TextColor="White"
+                                                CommandParameter="{Binding Id}"/>
+                                    </HorizontalStackLayout>
+
+                                </StackLayout>
+                            </Frame>
+
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+
+            </ListView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

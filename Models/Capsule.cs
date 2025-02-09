@@ -54,6 +54,10 @@ namespace DearFuture.Models
         public double? Longitude { get; set; }
         public bool HasLocation => Latitude.HasValue && Longitude.HasValue;
 
+        // Soft delete fields
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+
         public string GetMessage()
         {
             return IsUnlocked ? Message : $"This capsule is locked! Come back on {UnlockDate:MMMM dd, yyyy}.";

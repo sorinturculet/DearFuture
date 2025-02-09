@@ -11,5 +11,9 @@ namespace DearFuture.Repositories
         Task<int> AddCapsuleAsync(Capsule capsule);
         Task<int> UpdateCapsuleAsync(Capsule capsule);
         Task<int> DeleteCapsuleAsync(int id);
+        Task<List<Capsule>> GetDeletedCapsulesAsync();
+        Task<int> RestoreCapsuleAsync(int id);
+        Task<int> CleanupOldDeletedCapsulesAsync();
+        Task<int> PermanentlyDeleteCapsuleAsync(int id);
     }
 }

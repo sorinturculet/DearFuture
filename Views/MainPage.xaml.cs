@@ -56,5 +56,10 @@ namespace DearFuture.Views
         {
             await Navigation.PushAsync(new ArchivedCapsulesPage(_viewModel));
         }
+        private async void OnViewTrashCapsulesClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new TrashCapsulesPage(_viewModel));
+        }
+
     }
 }

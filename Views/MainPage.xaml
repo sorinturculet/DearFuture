@@ -9,12 +9,15 @@
         <ScrollView>
             <VerticalStackLayout Padding="10">
             <!-- Navigation Buttons -->
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                <Button Text="Archived Capsules" Clicked="OnViewArchivedCapsulesClicked"
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                    <Button Text="Archived Capsules" Clicked="OnViewArchivedCapsulesClicked"
                         BackgroundColor="DarkGray" TextColor="White"/>
-            </HorizontalStackLayout>
+                    <Button Text="Trash" Clicked="OnViewTrashCapsulesClicked"
+                         BackgroundColor="Red" TextColor="White"/>
+                </HorizontalStackLayout>
 
-            
+
+
                 <VerticalStackLayout Padding="20">
                     <Grid Padding="20">
                         <Grid.ColumnDefinitions>

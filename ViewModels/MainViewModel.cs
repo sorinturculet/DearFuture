@@ -4,6 +4,7 @@ using DearFuture.Observers;
 namespace DearFuture.ViewModels;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Maui.Devices.Sensors;
 
@@ -13,6 +14,7 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
     public IGeolocation geolocation;
     private ObservableCollection<Capsule> _capsules;
     private ObservableCollection<Capsule> _archivedCapsules;
+    private ObservableCollection<Capsule> _trashCapsules;
     private string _selectedSortOption = "Default";
     private string _selectedCategory = "All";
 
@@ -21,6 +23,7 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         _capsuleService = capsuleService;
         Capsules = new ObservableCollection<Capsule>();
         ArchivedCapsules = new ObservableCollection<Capsule>();
+        TrashCapsules = new ObservableCollection<Capsule>();
 
         // Register as an observer to receive capsule updates
         CapsuleObservable.AddObserver(this);
@@ -50,6 +53,15 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         {
             _archivedCapsules = value;
             OnPropertyChanged(nameof(ArchivedCapsules));
+        }
+    }
+    public ObservableCollection<Capsule> TrashCapsules
+    {
+        get => _trashCapsules;
+        set
+        {
+            _trashCapsules = value;
+            OnPropertyChanged(nameof(TrashCapsules));
         }
     }
 
@@ -118,7 +130,7 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         }
     }
 
-    // Loads both locked and archived capsules
+    // Loads locked, trash and archived capsules
     public async void LoadCapsules()
     {
         var capsulesList = await _capsuleService.GetLockedCapsulesAsync(SelectedCategory, SelectedSortOption);
@@ -126,6 +138,10 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
 
         var archivedCapsulesList = await _capsuleService.GetArchivedCapsulesAsync();
         ArchivedCapsules = new ObservableCollection<Capsule>(archivedCapsulesList);
+
+        CleanupOldDeletedCapsulesAsync();
+        var trashedCapsulesList = await _capsuleService.GetDeletedCapsulesAsync();
+        TrashCapsules = new ObservableCollection<Capsule>(trashedCapsulesList);
     }
 
     // Observer method - Reloads capsules when notified of updates
@@ -194,6 +210,7 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         // Notify UI of updates
         OnPropertyChanged(nameof(Capsules));
         OnPropertyChanged(nameof(ArchivedCapsules));
+        OnPropertyChanged(nameof(TrashCapsules));
 
         return message;
     }
@@ -202,9 +219,43 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
     public async Task DeleteCapsuleAsync(int id)
     {
         await _capsuleService.DeleteCapsuleAsync(id);
-        Capsules.Remove(Capsules.FirstOrDefault(c => c.Id == id));
+        var capsule = Capsules.FirstOrDefault(c => c.Id == id);
+        if (capsule != null)
+        {
+            Capsules.Remove(capsule);
+            capsule.DeletedAt = DateTime.Now;
+            TrashCapsules.Add(capsule);
+            OnPropertyChanged(nameof(Capsules));
+            OnPropertyChanged(nameof(ArchivedCapsules));
+            OnPropertyChanged(nameof(TrashCapsules));
+        }
+    }
+    public async Task PermanentlyDeleteCapsuleAsync(int id)
+    {
+        await _capsuleService.PermanentlyDeleteCapsuleAsync(id);
+        var capsule = TrashCapsules.FirstOrDefault(c => c.Id == id);
+        if (capsule != null)
+        {
+            TrashCapsules.Remove(capsule);
+            OnPropertyChanged(nameof(TrashCapsules));
+        }
     }
 
+
+    public async Task RestoreCapsuleAsync(int id)
+    {
+        await _capsuleService.RestoreCapsuleAsync(id);
+        var capsule = TrashCapsules.FirstOrDefault(c => c.Id == id);
+        if (capsule != null)
+        {
+            TrashCapsules.Remove(capsule);
+            Capsules.Add(capsule);
+        }
+    }
+    public async Task CleanupOldDeletedCapsulesAsync()
+    {
+        await _capsuleService.CleanupOldDeletedCapsulesAsync();
+    }
     public event PropertyChangedEventHandler PropertyChanged;
 
     // Notifies the UI when a property value changes
