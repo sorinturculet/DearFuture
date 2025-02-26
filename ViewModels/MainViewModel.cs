@@ -1,68 +1,37 @@
 ﻿using DearFuture.Models;
 using DearFuture.Services;
-using DearFuture.Observers;
 namespace DearFuture.ViewModels;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Maui.Devices.Sensors;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
+public partial class MainViewModel : BaseViewModel, IDisposable
 {
     private readonly CapsuleService _capsuleService;
-    public IGeolocation geolocation;
-    private ObservableCollection<Capsule> _capsules;
-    private ObservableCollection<Capsule> _archivedCapsules;
-    private ObservableCollection<Capsule> _trashCapsules;
-    private string _selectedSortOption = "Default";
-    private string _selectedCategory = "All";
+    private readonly IGeolocation _geolocation;
+
+    [ObservableProperty]
+    private ObservableCollection<CapsulePreview> capsules;
+
+    [ObservableProperty]
+    private string selectedSortOption = "Default";
+
+    [ObservableProperty]
+    private string selectedCategory = "All";
 
     public MainViewModel(CapsuleService capsuleService, IGeolocation geolocation)
     {
+        Title = "Dear Future";
         _capsuleService = capsuleService;
-        Capsules = new ObservableCollection<Capsule>();
-        ArchivedCapsules = new ObservableCollection<Capsule>();
-        TrashCapsules = new ObservableCollection<Capsule>();
-
-        // Register as an observer to receive capsule updates
-        CapsuleObservable.AddObserver(this);
-
-        // Start a background timer to update countdowns for locked capsules
+        _geolocation = geolocation;
+        Capsules = new ObservableCollection<CapsulePreview>();
+        
         StartTimer();
-
-        this.geolocation = geolocation;
-    }
-
-    // Collection of locked capsules
-    public ObservableCollection<Capsule> Capsules
-    {
-        get => _capsules;
-        set
-        {
-            _capsules = value;
-            OnPropertyChanged(nameof(Capsules));
-        }
-    }
-
-    // Collection of archived (opened) capsules
-    public ObservableCollection<Capsule> ArchivedCapsules
-    {
-        get => _archivedCapsules;
-        set
-        {
-            _archivedCapsules = value;
-            OnPropertyChanged(nameof(ArchivedCapsules));
-        }
-    }
-    public ObservableCollection<Capsule> TrashCapsules
-    {
-        get => _trashCapsules;
-        set
-        {
-            _trashCapsules = value;
-            OnPropertyChanged(nameof(TrashCapsules));
-        }
+        LoadCapsulesCommand.Execute(null);
     }
 
     // Sorting options available for capsules
@@ -86,179 +55,89 @@ public class MainViewModel : INotifyPropertyChanged, ICapsuleObserver
         "Reflection"
     };
 
-    // Currently selected sorting option
-    public string SelectedSortOption
+    [RelayCommand]
+    public async Task LoadCapsules()
     {
-        get => _selectedSortOption;
-        set
-        {
-            _selectedSortOption = value;
-            LoadCapsules(); // Refresh capsules when sorting changes
-        }
+        var capsulesList = await _capsuleService.GetLockedCapsulesAsync(SelectedCategory, SelectedSortOption);
+        Capsules = new ObservableCollection<CapsulePreview>(capsulesList);
     }
 
-    // Currently selected category filter
-    public string SelectedCategory
+    [RelayCommand]
+    public async Task<string> OpenCapsule(int id)
     {
-        get => _selectedCategory;
-        set
+        var capsule = Capsules.FirstOrDefault(c => c.Id == id);
+        if (capsule == null) return "Capsule not found.";
+
+        // Check if it's time to unlock
+        if (!capsule.IsUnlocked)
         {
-            _selectedCategory = value;
-            LoadCapsules(); // Refresh capsules when category changes
+            var timeRemaining = _capsuleService.GetTimeRemaining(capsule);
+            if (timeRemaining != "Unlocked!")
+            {
+                return $"This capsule will unlock in {timeRemaining}";
+            }
         }
+
+        // Try to open the capsule (includes location check)
+        var (success, message) = await _capsuleService.TryOpenCapsuleAsync(id, _geolocation);
+        if (!success)
+            return message;
+
+        // If successful, update UI
+        Capsules.Remove(capsule);
+        await LoadCapsules(); // Refresh all lists to ensure proper state
+
+        return $"Message: {message}\n\nThis capsule has been moved to your archives.";
     }
 
-    // Starts a background timer that updates the countdown timers every second
+    [RelayCommand]
+    public async Task<bool> MoveToTrash(int capsuleId)
+    {
+        var capsule = Capsules.FirstOrDefault(c => c.Id == capsuleId);
+        if (capsule != null)
+        {
+            await _capsuleService.MoveCapsuleToTrashAsync(capsuleId);
+            Capsules.Remove(capsule);
+            return true;
+        }
+        return false;
+    }
+
+    private bool _isDisposed;
     private async void StartTimer()
     {
-        while (true)
+        while (!_isDisposed)
         {
             UpdateCapsuleTimers();
             await Task.Delay(1000);
         }
     }
 
-    // Updates the remaining time for each locked capsule
     private void UpdateCapsuleTimers()
     {
         foreach (var capsule in Capsules)
         {
-            TimeSpan remaining = capsule.UnlockDate - DateTime.Now;
-            capsule.TimeRemaining = remaining.TotalSeconds > 0
-                ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m:{remaining.Seconds:D2}s"
-                : "Unlocked!";
+            capsule.TimeRemaining = _capsuleService.GetTimeRemaining(capsule);
         }
     }
 
-    // Loads locked, trash and archived capsules
-    public async void LoadCapsules()
+    partial void OnSelectedSortOptionChanged(string value)
     {
-        var capsulesList = await _capsuleService.GetLockedCapsulesAsync(SelectedCategory, SelectedSortOption);
-        Capsules = new ObservableCollection<Capsule>(capsulesList);
-
-        var archivedCapsulesList = await _capsuleService.GetArchivedCapsulesAsync();
-        ArchivedCapsules = new ObservableCollection<Capsule>(archivedCapsulesList);
-
-        CleanupOldDeletedCapsulesAsync();
-        var trashedCapsulesList = await _capsuleService.GetDeletedCapsulesAsync();
-        TrashCapsules = new ObservableCollection<Capsule>(trashedCapsulesList);
+        LoadCapsulesCommand.Execute(null);
     }
 
-    // Observer method - Reloads capsules when notified of updates
-    public void UpdateCapsules()
+    partial void OnSelectedCategoryChanged(string value)
     {
-        LoadCapsules();
+        LoadCapsulesCommand.Execute(null);
     }
 
-    // Attempts to open a capsule if it is unlocked and meets the location requirement
-    public async Task<string> OpenCapsuleAsync(int id)
+    public void Dispose()
     {
-        var capsule = Capsules.FirstOrDefault(c => c.Id == id);
-        if (capsule == null)
-            return "Capsule not found.";
-
-        // Check if capsule requires location validation before opening
-        if (capsule.HasLocation)
-        {
-            try
-            {
-                var location = await geolocation.GetLastKnownLocationAsync();
-                if (location == null)
-                {
-                    location = await geolocation.GetLocationAsync(
-                        new GeolocationRequest
-                        {
-                            DesiredAccuracy = GeolocationAccuracy.Medium,
-                            Timeout = TimeSpan.FromSeconds(30),
-                        });
-
-                    if (location == null)
-                    {
-                        return "Error getting location.";
-                    }
-                }
-
-                // Calculate distance between user and capsule location
-                var distance = location.CalculateDistance(capsule.Latitude.Value, capsule.Longitude.Value, DistanceUnits.Kilometers);
-
-                // Capsule can only be opened if the user is within 1 km
-                if (distance > 1)
-                {
-                    return "You are too far from the capsule.";
-                }
-            }
-            catch (Exception ex)
-            {
-                return "Error getting location.";
-            }
-        }
-
-        // Attempt to unlock the capsule through the service
-        string message = await _capsuleService.OpenCapsuleAsync(id);
-
-        // If the capsule remains locked, return without updating UI
-        if (!capsule.IsUnlocked)
-            return message;
-
-        // Mark the capsule as opened
-        capsule.IsOpened = true;
-
-        // Move the capsule from locked to archived list
-        Capsules.Remove(capsule);
-        ArchivedCapsules.Add(capsule);
-
-        // Notify UI of updates
-        OnPropertyChanged(nameof(Capsules));
-        OnPropertyChanged(nameof(ArchivedCapsules));
-        OnPropertyChanged(nameof(TrashCapsules));
-
-        return message;
+        _isDisposed = true;
     }
 
-    // Deletes a capsule by its ID
-    public async Task DeleteCapsuleAsync(int id)
+    public async Task<string> GetCapsuleMessageAsync(int capsuleId)
     {
-        await _capsuleService.DeleteCapsuleAsync(id);
-        var capsule = Capsules.FirstOrDefault(c => c.Id == id);
-        if (capsule != null)
-        {
-            Capsules.Remove(capsule);
-            capsule.DeletedAt = DateTime.Now;
-            TrashCapsules.Add(capsule);
-            OnPropertyChanged(nameof(Capsules));
-            OnPropertyChanged(nameof(ArchivedCapsules));
-            OnPropertyChanged(nameof(TrashCapsules));
-        }
+        return await _capsuleService.GetMessageAsync(capsuleId);
     }
-    public async Task PermanentlyDeleteCapsuleAsync(int id)
-    {
-        await _capsuleService.PermanentlyDeleteCapsuleAsync(id);
-        var capsule = TrashCapsules.FirstOrDefault(c => c.Id == id);
-        if (capsule != null)
-        {
-            TrashCapsules.Remove(capsule);
-            OnPropertyChanged(nameof(TrashCapsules));
-        }
-    }
-
-
-    public async Task RestoreCapsuleAsync(int id)
-    {
-        await _capsuleService.RestoreCapsuleAsync(id);
-        var capsule = TrashCapsules.FirstOrDefault(c => c.Id == id);
-        if (capsule != null)
-        {
-            TrashCapsules.Remove(capsule);
-            Capsules.Add(capsule);
-        }
-    }
-    public async Task CleanupOldDeletedCapsulesAsync()
-    {
-        await _capsuleService.CleanupOldDeletedCapsulesAsync();
-    }
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    // Notifies the UI when a property value changes
-    protected virtual void OnPropertyChanged(string propertyName) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

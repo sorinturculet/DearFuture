@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using DearFuture.Models;
 using DearFuture.Services;
-using DearFuture.Observers;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices.Sensors;
 
@@ -91,7 +90,7 @@ namespace DearFuture.ViewModels
             "Reflection"
         };
 
-        // Flag indicating whether the capsule uses location-based unlocking
+        // Flag indicating whether the capsule uses location feature
         public bool UseLocation
         {
             get => _useLocation;
@@ -166,24 +165,39 @@ namespace DearFuture.ViewModels
                 return;
             }
 
-            // Combine Date and Time into a single DateTime value
-            DateTime unlockDateTime = UnlockDate.Date + UnlockTime;
+            // Combine the selected date and time into a local DateTime
+            var localUnlockDateTime = UnlockDate.Date + UnlockTime;
+            
+            // Convert to UTC for storage
+            var utcUnlockDateTime = localUnlockDateTime.ToUniversalTime();
+
+            // Validate that the unlock date is in the future
+            if (utcUnlockDateTime <= DateTime.UtcNow)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Unlock date must be in the future.", "OK");
+                return;
+            }
 
             var capsule = new Capsule
             {
                 Title = Title,
                 Message = Message,
-                UnlockDate = unlockDateTime,
+                UnlockDate = utcUnlockDateTime,  // Store in UTC
                 Color = SelectedColor,
                 Category = SelectedCategory,
-                DateCreated = DateTime.Now, // Track when the capsule was created
-                Latitude = UseLocation ? _latitude : null, // Save only if enabled
-                Longitude = UseLocation ? _longitude : null
+                DateCreated = DateTime.UtcNow,
+                Latitude = UseLocation ? _latitude : null,
+                Longitude = UseLocation ? _longitude : null,
+                Status = CapsuleStatus.Active,
+                IsOpened = false
             };
 
             if (await _capsuleService.AddCapsuleAsync(capsule))
             {
-                CapsuleObservable.NotifyObservers();
+                // Get the MainViewModel instance and refresh its data
+                var mainViewModel = Application.Current.MainPage.Handler.MauiContext.Services.GetService<MainViewModel>();
+                await mainViewModel?.LoadCapsulesCommand.ExecuteAsync(null);
+                
                 await Shell.Current.GoToAsync("..");
             }
             else

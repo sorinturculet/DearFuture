@@ -12,7 +12,7 @@ namespace DearFuture.Models
         public int Id { get; set; }
 
         public string Title { get; set; } = string.Empty;
-        public string Message { get; init; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
         public string Color { get; set; } = "#FFFFFF";
         public DateTime UnlockDate { get; set; }
         public string Category { get; set; } = string.Empty;
@@ -21,20 +21,12 @@ namespace DearFuture.Models
         // Determines if the capsule can be unlocked
         public bool IsUnlocked => DateTime.Now >= UnlockDate;
 
-        private bool _isOpened = false;
-        public bool IsOpened
-        {
-            get => _isOpened;
-            set
-            {
-                if (IsUnlocked)
-                {
-                    _isOpened = value;
-                    OnPropertyChanged(nameof(IsOpened));
-                }
-            }
-        }
+        // Replace IsDeleted and DeletedAt with these fields
+        public CapsuleStatus Status { get; set; } = CapsuleStatus.Active;
+        public DateTime? StatusChangedAt { get; set; }
+        public bool IsOpened { get; set; } = false;
 
+        // Time remaining until the capsule can be unlocked
         private string _timeRemaining;
         public string TimeRemaining
         {
@@ -53,10 +45,6 @@ namespace DearFuture.Models
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
         public bool HasLocation => Latitude.HasValue && Longitude.HasValue;
-
-        // Soft delete fields
-        public bool IsDeleted { get; set; } = false;
-        public DateTime? DeletedAt { get; set; }
 
         public string GetMessage()
         {

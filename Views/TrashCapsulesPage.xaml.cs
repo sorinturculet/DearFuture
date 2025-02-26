@@ -1,31 +1,39 @@
 using DearFuture.ViewModels;
 using DearFuture.Models;
+using ViewModels;
 namespace DearFuture.Views
 {
     public partial class TrashCapsulesPage : ContentPage
     {
-        private readonly MainViewModel _viewModel;
+        private readonly TrashCapsulesViewModel _viewModel;
 
-        public TrashCapsulesPage(MainViewModel viewModel)
+        public TrashCapsulesPage(TrashCapsulesViewModel viewModel)
         {
             InitializeComponent();
-            BindingContext = _viewModel = viewModel; // Store reference to ViewModel
+            BindingContext = _viewModel = viewModel;
         }
 
         private async void OnTrashCapsuleTapped(object sender, ItemTappedEventArgs e)
         {
-            if (e.Item is Capsule capsule)
+            if (e.Item is CapsulePreview capsule)
             {
-                string message = $"This capsule was deleted on {capsule.DeletedAt:MMMM dd, yyyy}.";
+                string message = $"This capsule was moved to trash on {capsule.StatusChangedAt:MMMM dd, yyyy}.";
                 await DisplayAlert($"Trash Capsule: {capsule.Title}", message, "OK");
             }
         }
 
         private async void OnRestoreCapsuleClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.BindingContext is Capsule capsule)
+            if (sender is Button button && button.CommandParameter is int capsuleId)
             {
-                await _viewModel.RestoreCapsuleAsync(capsule.Id);
+                bool confirm = await DisplayAlert("Restore Capsule",
+                    "Are you sure you want to restore this capsule?",
+                    "Restore", "Cancel");
+
+                if (confirm)
+                {
+                    await _viewModel.RestoreCapsuleAsync(capsuleId);
+                }
             }
         }
 
@@ -39,7 +47,7 @@ namespace DearFuture.Views
 
                 if (confirm)
                 {
-                    await _viewModel.PermanentlyDeleteCapsuleAsync(capsuleId); // Implement permanent deletion if needed
+                    await _viewModel.PermanentlyDeleteCapsuleAsync(capsuleId);
                 }
             }
         }

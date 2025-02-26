@@ -6,14 +6,27 @@ namespace DearFuture.Repositories
 {
     public interface ICapsuleRepository
     {
-        Task<List<Capsule>> GetCapsulesAsync();
-        Task<Capsule> GetCapsuleByIdAsync(int id);
-        Task<int> AddCapsuleAsync(Capsule capsule);
-        Task<int> UpdateCapsuleAsync(Capsule capsule);
-        Task<int> DeleteCapsuleAsync(int id);
-        Task<List<Capsule>> GetDeletedCapsulesAsync();
-        Task<int> RestoreCapsuleAsync(int id);
-        Task<int> CleanupOldDeletedCapsulesAsync();
-        Task<int> PermanentlyDeleteCapsuleAsync(int id);
+        // List retrieval methods
+        Task<List<CapsulePreview>> GetActiveCapsulesAsync();
+        Task<List<CapsulePreview>> GetArchivedCapsulesAsync();
+        Task<List<CapsulePreview>> GetTrashedCapsulesAsync();
+        
+        // Message retrieval
+        Task<string> GetMessageAsync(int capsuleId);
+        
+        // Creation
+        Task<int> CreateAsync(Capsule capsule);
+        
+        // Status change operations
+        Task MarkAsOpenedAsync(int capsuleId);
+        Task MoveToArchiveAsync(int capsuleId);
+        Task MoveToTrashAsync(int capsuleId);
+        Task RestoreFromTrashAsync(int capsuleId);
+        
+        // Cleanup operations
+        Task<int> CleanupOldTrashedCapsulesAsync(int daysThreshold = 30);
+        Task<int> PermanentlyDeleteAsync(int capsuleId);
+
+        Task<Capsule> GetCapsuleAsync(int id);
     }
 }

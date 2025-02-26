@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DearFuture.Models;
 using DearFuture.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace DearFuture.Services
 {
@@ -17,10 +18,9 @@ namespace DearFuture.Services
         }
 
         // Retrieves all locked capsules, applying optional filtering and sorting
-        public async Task<List<Capsule>> GetLockedCapsulesAsync(string category = null, string sortOption = "")
+        public async Task<List<CapsulePreview>> GetLockedCapsulesAsync(string category = null, string sortOption = "")
         {
-            var capsules = await _capsuleRepository.GetCapsulesAsync();
-            capsules = capsules.Where(c => !c.IsOpened).ToList();
+            var capsules = await _capsuleRepository.GetActiveCapsulesAsync();
 
             // Apply filtering if a category is specified
             if (!string.IsNullOrEmpty(category) && category != "All")
@@ -42,85 +42,128 @@ namespace DearFuture.Services
         }
 
         // Retrieves all archived (opened) capsules
-        public async Task<List<Capsule>> GetArchivedCapsulesAsync()
+        public Task<List<CapsulePreview>> GetArchivedCapsulesAsync()
         {
-            var capsules = await _capsuleRepository.GetCapsulesAsync();
-            return capsules.Where(c => c.IsOpened).ToList();
+            return _capsuleRepository.GetArchivedCapsulesAsync();
         }
 
-        // Opens a capsule if it is unlocked and returns its message
-        public async Task<string> OpenCapsuleAsync(int id)
+        // Attempts to open a capsule if it is unlocked and meets the location requirement
+        public async Task<(bool success, string message)> TryOpenCapsuleAsync(int id, IGeolocation geolocation)
         {
-            var capsule = await _capsuleRepository.GetCapsuleByIdAsync(id);
-            if (capsule == null || !capsule.IsUnlocked)
-                return "This capsule is locked!";
+            var capsule = await _capsuleRepository.GetCapsuleAsync(id);
+            if (capsule == null)
+                return (false, "Capsule not found.");
 
-            capsule.IsOpened = true;
-            await _capsuleRepository.UpdateCapsuleAsync(capsule);
-            return capsule.GetMessage();
-        }
+            // Check if capsule requires location validation
+            if (capsule.HasLocation)
+            {
+                try
+                {
+                    var location = await geolocation.GetLastKnownLocationAsync();
+                    if (location == null)
+                    {
+                        location = await geolocation.GetLocationAsync(
+                            new GeolocationRequest
+                            {
+                                DesiredAccuracy = GeolocationAccuracy.Medium,
+                                Timeout = TimeSpan.FromSeconds(30),
+                            });
 
-        // Retrieves a capsule by its ID
-        public Task<Capsule> GetCapsuleByIdAsync(int id)
-        {
-            return _capsuleRepository.GetCapsuleByIdAsync(id);
+                        if (location == null)
+                            return (false, "Unable to get your location.");
+                    }
+
+                    // Calculate distance between user and capsule location
+                    var distance = location.CalculateDistance(
+                        capsule.Latitude.Value, 
+                        capsule.Longitude.Value, 
+                        DistanceUnits.Kilometers);
+
+                    // Capsule can only be opened if user is within 1 km
+                    if (distance > 1)
+                        return (false, "You must be within 1km of the capsule location to open it.");
+                }
+                catch (Exception)
+                {
+                    return (false, "Location services are not available.");
+                }
+            }
+
+            // If we get here, location check passed or wasn't required
+            var message = await _capsuleRepository.GetMessageAsync(id);
+            if (string.IsNullOrEmpty(message))
+                return (false, "Unable to retrieve capsule message.");
+
+            await _capsuleRepository.MarkAsOpenedAsync(id);
+            return (true, message);
         }
 
         // Adds a new capsule if it passes validation
         public async Task<bool> AddCapsuleAsync(Capsule capsule)
         {
-            if (string.IsNullOrWhiteSpace(capsule.Title) || capsule.UnlockDate <= DateTime.Now)
+            try
             {
-                return false; // Validation failed
+                if (string.IsNullOrWhiteSpace(capsule.Title) || 
+                    string.IsNullOrWhiteSpace(capsule.Message) || 
+                    capsule.UnlockDate <= DateTime.UtcNow)
+                {
+                    return false; // Validation failed
+                }
+
+                await _capsuleRepository.CreateAsync(capsule);
+                return true;
             }
-
-            await _capsuleRepository.AddCapsuleAsync(capsule);
-            return true;
+            catch
+            {
+                return false;
+            }
         }
 
-        // Updates an existing capsule in the database
-        public Task<int> UpdateCapsuleAsync(Capsule capsule)
+        // Moves a capsule to Trash
+        public Task MoveCapsuleToTrashAsync(int id)
         {
-            return _capsuleRepository.UpdateCapsuleAsync(capsule);
+            return _capsuleRepository.MoveToTrashAsync(id);
         }
 
-        // Moves a capsule to Trash (soft delete)
-        public Task<int> DeleteCapsuleAsync(int id)
+        // Retrieves all trashed capsules
+        public Task<List<CapsulePreview>> GetTrashedCapsulesAsync()
         {
-            return _capsuleRepository.DeleteCapsuleAsync(id);
+            return _capsuleRepository.GetTrashedCapsulesAsync();
         }
-        // Permanently deletes a capsule from the database
-        public Task<int> PermanentlyDeleteCapsuleAsync(int id)
-        {
-            return _capsuleRepository.PermanentlyDeleteCapsuleAsync(id);
-        }
-
-        // Retrieves all deleted (trashed) capsules
-        public Task<List<Capsule>> GetDeletedCapsulesAsync()
-        {
-            return _capsuleRepository.GetDeletedCapsulesAsync();
-        }
-
 
         // Restores a capsule from Trash
-        public Task<int> RestoreCapsuleAsync(int id)
+        public Task RestoreCapsuleAsync(int id)
         {
-            return _capsuleRepository.RestoreCapsuleAsync(id);
+            return _capsuleRepository.RestoreFromTrashAsync(id);
         }
 
-        // Permanently deletes capsules that have been in Trash for more than 15 days
-        public Task<int> CleanupOldDeletedCapsulesAsync()
+        // Permanently deletes a capsule
+        public Task DeletePermanentlyAsync(int id)
         {
-            return _capsuleRepository.CleanupOldDeletedCapsulesAsync();
+            return _capsuleRepository.PermanentlyDeleteAsync(id);
+        }
+
+        // Cleanup old trashed capsules
+        public Task<int> CleanupOldTrashedCapsulesAsync()
+        {
+            return _capsuleRepository.CleanupOldTrashedCapsulesAsync();
         }
 
         // Calculates the remaining time before a capsule can be unlocked
-        public string GetTimeRemaining(Capsule capsule)
+        public string GetTimeRemaining(CapsulePreview capsule)
         {
-            TimeSpan remaining = capsule.UnlockDate - DateTime.Now;
+            // Convert UTC unlock date to local time for display
+            var localUnlockDate = capsule.UnlockDate.ToLocalTime();
+            TimeSpan remaining = localUnlockDate - DateTime.Now;
+            
             return remaining.TotalSeconds > 0
-                ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m"
+                ? $"{remaining.Days:D2}d:{remaining.Hours:D2}h:{remaining.Minutes:D2}m:{remaining.Seconds:D2}s"
                 : "Unlocked!";
+        }
+
+        public async Task<string> GetMessageAsync(int capsuleId)
+        {
+            return await _capsuleRepository.GetMessageAsync(capsuleId);
         }
     }
 }

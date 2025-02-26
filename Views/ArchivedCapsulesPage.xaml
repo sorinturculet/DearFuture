@@ -22,15 +22,21 @@
                             <!-- Capsule container -->
                             <Frame BorderColor="{Binding Color}" Padding="10" CornerRadius="10"
                                    HasShadow="True" BackgroundColor="{Binding Color}" Margin="5">
-                                <StackLayout>
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <!-- Capsule Details (Left Side) -->
+                                    <StackLayout Grid.Column="0">
+                                        <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
+                                        <Label Text="{Binding DateCreated, StringFormat='Created on: {0:MMMM dd, yyyy}'}"
+                                               FontSize="14" TextColor="Black"/>
+                                        <Label Text="{Binding StatusChangedAt, StringFormat='Archived on: {0:MMMM dd, yyyy}'}"
+                                               FontSize="14" TextColor="Black"/>
+                                    </StackLayout>
 
-                                    <!-- Capsule title -->
-                                    <Label Text="{Binding Title}" FontSize="18" FontAttributes="Bold"/>
-
-                                    <!-- Display when the capsule was created -->
-                                    <Label Text="{Binding DateCreated, StringFormat='Created on: {0:MMMM dd, yyyy}'}"
-                                           FontSize="14" TextColor="Black"/>
-                                </StackLayout>
+                                    <!-- Delete Button (Right Side) -->
+                                    <Button Grid.Column="1" Text="❌" BackgroundColor="Transparent"
+                                            FontSize="18" Clicked="OnMoveToTrashClicked"
+                                            CommandParameter="{Binding Id}" />
+                                </Grid>
                             </Frame>
 
                         </ViewCell>

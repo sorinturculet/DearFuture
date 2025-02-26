@@ -1,8 +1,10 @@
 ﻿using DearFuture.Repositories;
+using CommunityToolkit.Mvvm.Input;
 using DearFuture.Services;
 using DearFuture.Views;
 using DearFuture.ViewModels;
 using Microsoft.Extensions.Logging;
+using ViewModels;
 
 namespace DearFuture;
 public static class MauiProgram
@@ -19,8 +21,9 @@ public static class MauiProgram
             });
         
         // Register SQLite Repository
-        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "dearfuture.db");
-        builder.Services.AddSingleton<ICapsuleRepository>(sp => new CapsuleRepository(dbPath));
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "capsules.db");
+        builder.Services.AddSingleton<ICapsuleRepository>(s => 
+            new CapsuleRepository(dbPath));
 
         // Register Geolocation and Map Services.
         builder.Services.AddSingleton<IGeolocation>(Geolocation.Default);
@@ -31,6 +34,8 @@ public static class MauiProgram
         // Register ViewModels
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddTransient<CreateCapsuleViewModel>();
+        builder.Services.AddTransient<ArchivedCapsulesViewModel>();
+        builder.Services.AddTransient<TrashCapsulesViewModel>();
 
         // Register Views
 

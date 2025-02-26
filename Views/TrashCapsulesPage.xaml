@@ -9,7 +9,7 @@
         <VerticalStackLayout Padding="20">
 
             <!-- Page title -->
-            <Label Text="Trash Capsules" FontSize="24" FontAttributes="Bold"/>
+            <Label Text="Each capsule will be permanently removed 15 days after its deletion date." FontSize="24" FontAttributes="Bold"/>
 
             <!-- List of deleted capsules -->
             <ListView ItemsSource="{Binding TrashCapsules}" SelectionMode="None"
@@ -33,12 +33,14 @@
 
                                     <!-- Restore and Permanent Delete Buttons -->
                                     <HorizontalStackLayout Spacing="10">
-                                        <Button Text="Restore" Clicked="OnRestoreCapsuleClicked"
-                                                BackgroundColor="Green" TextColor="White"
-                                                CommandParameter="{Binding Id}"/>
-                                        <Button Text="Delete Permanently" Clicked="OnDeleteCapsulePermanentlyClicked"
-                                                BackgroundColor="Red" TextColor="White"
-                                                CommandParameter="{Binding Id}"/>
+                                        <Button Clicked="OnRestoreCapsuleClicked"
+                                                CommandParameter="{Binding Id}"
+                                                Text="Restore"
+                                                BackgroundColor="Green" TextColor="White"/>
+                                        <Button Clicked="OnDeleteCapsulePermanentlyClicked"
+                                                CommandParameter="{Binding Id}"
+                                                Text="Delete Permanently"
+                                                BackgroundColor="Red" TextColor="White"/>
                                     </HorizontalStackLayout>
 
                                 </StackLayout>
